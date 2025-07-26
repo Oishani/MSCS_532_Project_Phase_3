@@ -1,8 +1,13 @@
 import heapq
+from typing import List
 from .label import Label
 
 class LabelPriorityQueue:
-    """Min-heap priority queue for Labels, ordered lexicographically."""
+    """
+    Min‑heap over Label using lexicographic cost ordering.
+    """
+    __slots__ = ("_heap",)
+
     def __init__(self):
         self._heap: List[Label] = []
 

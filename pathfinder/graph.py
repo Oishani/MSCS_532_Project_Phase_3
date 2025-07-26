@@ -1,72 +1,89 @@
-from typing import Any, Dict, Tuple, List
+import sqlite3
+from typing import Any, Dict, Tuple, List, Iterator
 
 class Graph:
-    """Directed graph with adjacencies as neighbor→cost dicts for O(1) updates."""
+    """
+    Scalable graph supporting on‑disk storage for large datasets.
+    If `db_path` is None, falls back to in‑memory dict adjacencies.
+    """
 
-    def __init__(self):
-        # Each node maps to a dict: neighbor → (time, toll, scenic)
-        self._adj: Dict[Any, Dict[Any, Tuple[float, float, float]]] = {}
+    def __init__(self, db_path: str = None):
+        if db_path:
+            # Store edges in SQLite: table edges(u TEXT, v TEXT, t REAL, c REAL, s REAL)
+            self._conn = sqlite3.connect(db_path)
+            self._in_memory = False
+        else:
+            # Fallback to dict-of-dicts adjacency
+            self._adj: Dict[Any, Dict[Any, Tuple[float, float, float]]] = {}
+            self._in_memory = True
 
     def add_node(self, node: Any) -> None:
-        """Ensure a node exists."""
-        self._adj.setdefault(node, {})
+        if self._in_memory:
+            self._adj.setdefault(node, {})
 
     def add_edge(self, u: Any, v: Any, cost: Tuple[float, float, float]) -> None:
-        """Add or update a directed edge u → v in O(1)."""
         if not (isinstance(cost, tuple) and len(cost) == 3):
             raise ValueError("Cost must be a tuple of three floats")
-        self.add_node(u)
-        self.add_node(v)
-        self._adj[u][v] = cost
-
-    def remove_node(self, node: Any) -> None:
-        """Remove a node and all incoming/outgoing edges."""
-        if node not in self._adj:
-            raise KeyError(f"Node {node} not found")
-        # Remove outgoing
-        del self._adj[node]
-        # Remove any incoming edges
-        for nbrs in self._adj.values():
-            nbrs.pop(node, None)
+        if self._in_memory:
+            self.add_node(u); self.add_node(v)
+            self._adj[u][v] = cost
+        else:
+            t, c, s = cost
+            self._conn.execute(
+                "INSERT INTO edges(u, v, t, c, s) VALUES (?, ?, ?, ?, ?)",
+                (u, v, t, c, s)
+            )
+            self._conn.commit()
 
     def remove_edge(self, u: Any, v: Any) -> None:
-        """Remove edge u → v in O(1)."""
-        try:
-            del self._adj[u][v]
-        except KeyError:
-            raise ValueError(f"Edge {u} -> {v} not found")
+        if self._in_memory:
+            try:
+                del self._adj[u][v]
+            except KeyError:
+                raise ValueError(f"Edge {u} -> {v} not found")
+        else:
+            cur = self._conn.execute(
+                "DELETE FROM edges WHERE u = ? AND v = ?", (u, v)
+            )
+            if cur.rowcount == 0:
+                raise ValueError(f"Edge {u} -> {v} not found")
+            self._conn.commit()
 
-    def neighbors(self, node: Any) -> List[Tuple[Any, Tuple[float, float, float]]]:
-        """List (neighbor, cost) for a node."""
-        if node not in self._adj:
-            raise KeyError(f"Node {node} not found")
-        return list(self._adj[node].items())
+    def neighbors(self, node: Any) -> Iterator[Tuple[Any, Tuple[float, float, float]]]:
+        if self._in_memory:
+            if node not in self._adj:
+                raise KeyError(f"Node {node} not found")
+            yield from self._adj[node].items()
+        else:
+            cur = self._conn.execute(
+                "SELECT v, t, c, s FROM edges WHERE u = ?", (node,)
+            )
+            for v, t, c, s in cur:
+                yield v, (t, c, s)
 
     def bfs(self, start: Any) -> List[Any]:
-        """Breadth‑first traversal (unchanged)."""
         from collections import deque
-        if start not in self._adj:
+        if self._in_memory and start not in self._adj:
             raise KeyError(f"Node {start} not found")
         visited, order = {start}, []
         q = deque([start])
         while q:
             u = q.popleft()
             order.append(u)
-            for v in self._adj[u]:
+            for v, _ in self.neighbors(u):
                 if v not in visited:
                     visited.add(v)
                     q.append(v)
         return order
 
     def dfs(self, start: Any) -> List[Any]:
-        """Depth‑first traversal (unchanged)."""
-        if start not in self._adj:
+        if self._in_memory and start not in self._adj:
             raise KeyError(f"Node {start} not found")
         visited, order = set(), []
         def _rec(u):
             visited.add(u)
             order.append(u)
-            for v in self._adj[u]:
+            for v, _ in self.neighbors(u):
                 if v not in visited:
                     _rec(v)
         _rec(start)

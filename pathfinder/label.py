@@ -2,7 +2,11 @@ from functools import lru_cache
 from typing import Any, Tuple, Optional
 
 class Label:
-    """Encapsulates a 3‑tuple cost and predecessor pointer, with cached dominance."""
+    """
+    Lightweight label object with __slots__ to reduce memory overhead,
+    and memoized dominance checks for performance.
+    """
+    __slots__ = ("cost", "node", "predecessor")
 
     def __init__(self,
                  cost: Tuple[float, float, float],
