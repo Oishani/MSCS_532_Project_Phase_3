@@ -41,7 +41,7 @@
     * We use a min-heap to efficiently decide which path segment to explore next
     * We prioritize based on weights given to the criteria (time > toll > scenic value).
 
-### **Slide 6: How It Works: A Simplified Algorithm Flow**
+### **Slide 9: How It Works: A Simplified Algorithm Flow**
 * **Inspired by Dijkstra's, But Evolved:** Our algorithm extends the familiar concept of exploring paths but with multi-criteria support.
 * **Priority Queue:** We use a "Priority Queue" (a min-heap) to efficiently decide which path segment (label) to explore next. We prioritize paths that are "better" based on a predefined order (e.g., primarily by time, then by toll, etc.).
 * **The Process:**
@@ -51,14 +51,14 @@
     4.  If it's a "better compromise" (non-dominated), keep it and discard any paths it now "dominates".
     5.  Repeat until all promising paths are explored.
 
-### **Slide 7: Why Optimize? The Challenge of Scaling to Real-World Maps**
+### **Slide 10: Why Optimize? The Challenge of Scaling to Real-World Maps**
 * **From Concept to Reality:** Building a proof-of-concept is one thing, but making it work for an entire city or country, with millions of roads and intersections, is another.
 * **Key Challenges (Bottlenecks):**
     * **Slow Road Removal:** Removing or updating roads was taking too long in dynamic networks.
     * **Repetitive Checks:** We were repeatedly checking if one path dominated another, even for the same cost combinations.
     * **"Frontier Explosion":** The number of "compromise" paths (labels) at each intersection could grow extremely large, consuming a lot of memory and slowing things down.
 
-### **Slide 8: Smart Solutions for Speed and Memory Efficiency**
+### **Slide 11: Smart Solutions for Speed and Memory Efficiency**
 * **1. Faster Road Network Updates:**
     * We changed how the "Graph" stores connections from a list to a dictionary.
     * This made adding or removing roads almost instant (`O(1)`), which is crucial for dynamic maps.
@@ -70,7 +70,7 @@
     * Python's `__slots__` saves memory by replacing the default `__dict__` for storing object attributes with a fixed-size array, thereby reducing the memory footprint, especially for classes with many instances like the `Label` objects. This optimization directly allocates space for specified attributes, eliminating the overhead of a dictionary per object and allowing the application to handle larger datasets more efficiently.
     * This cut down memory usage significantly (tens of megabytes saved), allowing us to store millions of path options.
 
-### **Slide 9: Handling Massive Data & Future Growth**
+### **Slide 12: Handling Massive Data & Future Growth**
 * **1. Epsilon-Pruning: Taming the Frontier:**
     * To prevent the "frontier" (the set of non-dominated paths at a node) from exploding, we introduced "epsilon-pruning".
     * This means we'll merge paths that are "almost" identical in cost, trading a tiny bit of precision for huge gains in speed and memory. It keeps the number of options manageable.
@@ -79,7 +79,7 @@
     * This allows us to handle arbitrarily large maps, scaling beyond available RAM.
 * **Future Work:** Customizable ranking for users, advanced spatial indexing for faster retrieval of geographic data, and parallel processing to explore paths even faster.
 
-### **Slide 10: Impact and Future Vision**
+### **Slide 13: Impact and Future Vision**
 * **A Smarter Navigation Experience:** Our project moves navigation systems towards a more user-centric approach, offering truly intelligent choices that reflect diverse real-world needs, not just a single "best" path.
 * **Beyond Roads:** The principles of multi-criteria pathfinding and the data structures developed can be applied to many other complex decision-making problems:
     * Logistics and supply chain optimization
