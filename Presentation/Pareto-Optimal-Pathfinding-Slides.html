@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pareto-Optimal Pathfinding Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 60px;
+            display: none;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+
+        .slide h2 {
+            font-size: 2em;
+            color: #34495e;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .slide h3 {
+            font-size: 1.5em;
+            color: #2980b9;
+            margin-bottom: 15px;
+        }
+
+        .slide p, .slide li {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .slide ul {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .slide li {
+            margin-bottom: 10px;
+        }
+
+        .title-slide {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            border: none;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .title-slide .details {
+            font-size: 1.1em;
+            opacity: 0.8;
+            line-height: 1.8;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+        }
+
+        .nav-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1em;
+            z-index: 1000;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .highlight-black {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: black;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .performance-table th,
+        .performance-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .performance-table th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        .performance-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .feature-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .feature-box h4 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .algorithm-flow {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .algorithm-flow ol {
+            margin-left: 20px;
+        }
+
+        .algorithm-flow li {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slide-counter">
+            <span id="current-slide">1</span> / <span id="total-slides">10</span>
+        </div>
+
+        <!-- Slide 1: Title Slide -->
+        <div class="slide active title-slide">
+            <h1>Pareto-Optimal Pathfinding</h1>
+            <div class="subtitle">Designing Multi-Criteria Route Optimization for Real-World Navigation</div>
+            <div class="details">
+                <p><strong>Group 1:</strong> Haeri Kyoung, Oishani Ganguly, Akash Shrestha,<br>
+                Nasser Hasan Padilla, Kannekanti Nikhil, Venkata Tadigotla</p>
+                <p>University of the Cumberlands</p>
+                <p>MSCS-532-M20 - Algorithms and Data Structures</p>
+                <p>Professor Brandon Bass</p>
+                <p>July 27, 2025</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide">
+            <h2>The Problem with Current Navigation - It's Not Just About "Fastest"</h2>
+            <div class="two-column">
+                <div>
+                    <h3>🚗 The User Problem</h3>
+                    <p>Think about your own experience with navigation apps like Google Maps, Apple Maps, or Waze. Do you always <i>want</i> to pick the "fastest" route?</p>
+                    
+                    <h3>🔀 Real-World Choices</h3>
+                    <p>Sometimes you might want:</p>
+                    <ul>
+                        <li>The <span class="highlight">cheapest route</span> (avoiding tolls)</li>
+                        <li>The <span class="highlight">most scenic</span> option</li>
+                        <li>A route that <span class="highlight">balances multiple factors</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="feature-box">
+                        <h4>⚠️ The Limitation</h4>
+                        <p>Traditional navigation algorithms, like Dijkstra's, are designed to find the "single best" path based on <strong>one factor</strong>, like time or distance.</p>
+                        <p>They don't naturally account for these complex real-world tradeoffs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Why Multiple Criteria -->
+        <div class="slide">
+            <h2>Why Do We Need Multiple Criteria? Understanding User Trade-offs</h2>
+            
+            <div class="feature-box">
+                <h4>⚔️ Conflicting Objectives</h4>
+                <p>Imagine a route that's fastest but has tolls, versus a slightly slower route with no tolls. Which one is "better"? <strong>It depends on your priorities.</strong></p>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <h3>🔄 User Preferences are Dynamic</h3>
+                    <ul>
+                        <li><strong>Weekday commute:</strong> Fastest route priority</li>
+                        <li><strong>Weekend drive:</strong> Scenic route preference</li>
+                        <li><strong>Budget-conscious:</strong> Cheapest route focus</li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="feature-box">
+                        <h4>💡 The Optimization</h4>
+                        <p>Our project implements a <strong>"Pareto-optimal multi-criteria pathfinding system."</strong></p>
+                        <p>Instead of one "best" path, we find a <span class="highlight-black">set of "best possible compromise" paths</span>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Introducing Pareto-Optimal -->
+        <div class="slide">
+            <h2>Understanding Pareto-Optimal Pathfinding: Finding the "Best Compromises"</h2>
+            
+            <h3>🎯 Beyond Single-Objective</h3>
+            <p>We're moving from <em>"what's the best route?"</em> to <em>"what are all the smartest ways to balance travel time, toll cost, and scenic quality?"</em></p>
+
+            <div class="feature-box">
+                <h4>📊 What is "Pareto-Optimal"?</h4>
+                <ul>
+                    <li>Originated from <strong>Vilfredo Pareto</strong>, an Italian economist</li>
+                    <li>In many situations, there isn't one single "best" solution, but rather a <span class="highlight-black">set of solutions where improving one aspect means sacrificing another</span></li>
+                    <li>A path is <strong>Pareto-optimal</strong> (or "non-dominated") if you can't make it better in one aspect without making it worse in at least one other aspect</li>
+                    <li>Think of it as offering you a <span class="highlight-black">diverse set of truly valuable options</span>, where each option has a unique strength</li>
+                </ul>
+            </div>
+
+            <h3>🎯 Empowering Users</h3>
+            <p>Our solution allows users to make richer decisions based on their complex, dynamic preferences.</p>
+        </div>
+
+        <!-- Slide 5: Core Data Structures -->
+        <div class="slide">
+            <h2>The Core Data Structures: Building Our Smart Navigator</h2>
+            
+            <div class="feature-box">
+                <h4>🗺️ 1. The Graph (Your Road Network)</h4>
+                <ul>
+                    <li>We represent roads and intersections as a network, similar to how navigation apps see the world</li>
+                    <li><strong>The improvement:</strong> each road (edge) has not just one cost but a vector: <code>(travel_time, toll_cost, scenic_quality)</code></li>
+                    <li>We use an <span class="highlight-black">"adjacency list"</span> for efficiency - great for sparse networks like roads</li>
+                </ul>
+            </div>
+
+            <div class="two-column">
+                <div class="feature-box">
+                    <h4>🏷️ 2. Labels and Label Sets</h4>
+                    <ul>
+                        <li>Instead of tracking just one best path to each location, we keep a <span class="highlight-black">set of "labels"</span></li>
+                        <li>Each "label" represents a unique Pareto-optimal path found so far to that location</li>
+                        <li>The "Label Set" ensures we only keep non-dominated paths</li>
+                    </ul>
+                </div>
+                <div class="feature-box">
+                    <h4>⚡ 3. Label Priority Queue</h4>
+                    <ul>
+                        <li>Uses a min-heap to efficiently decide which path segment to explore next</li>
+                        <li>Prioritizes based on weights (time > toll > scenic value)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Algorithm Flow -->
+        <div class="slide">
+            <h2>How It Works: A Simplified Algorithm Flow</h2>
+            
+            <h3>🔄 Inspired by Dijkstra's, But Evolved</h3>
+            <p>Our algorithm extends the familiar concept of exploring paths but with multi-criteria support.</p>
+
+            <div class="algorithm-flow">
+                <h4>🔍 The Process:</h4>
+                <ol>
+                    <li><strong>Start</strong> at your origin with cost vector (0, 0, 0)</li>
+                    <li><strong>Explore</strong> neighboring roads, calculating new multi-dimensional costs</li>
+                    <li><strong>Compare</strong> each new path to existing paths for that destination</li>
+                    <li><strong>Keep</strong> non-dominated paths and discard any paths it now "dominates"</li>
+                    <li><strong>Repeat</strong> until all promising paths are explored</li>
+                </ol>
+            </div>
+
+            <div class="feature-box">
+                <h4>🎯 Priority Queue Strategy</h4>
+                <p>We use weighted ordering to decide exploration priority: <span class="highlight-black">primarily by time, then by toll, then by scenic quality</span>.</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Scaling Challenges -->
+        <div class="slide">
+            <h2>Why Optimize? The Challenge of Scaling to Real-World Maps</h2>
+            
+            <h3>🌍 From Concept to Reality</h3>
+            <p>Building a proof-of-concept is one thing, but making it work for an entire city or country, with <span class="highlight">millions of roads and intersections</span>, is another challenge entirely.</p>
+
+            <div class="two-column">
+                <div>
+                    <h3>⚠️ Key Challenges (Bottlenecks):</h3>
+                    <div class="feature-box">
+                        <h4>🐌 Slow Road Removal</h4>
+                        <p>Removing or updating roads was taking <strong>O(d)</strong> time in dynamic networks where d is the degree of a node</p>
+                    </div>
+                    <div class="feature-box">
+                        <h4>🔄 Repetitive Checks</h4>
+                        <p>Repeatedly checking if one path dominated another, even for the same cost combinations</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="feature-box">
+                        <h4>💥 "Frontier Explosion"</h4>
+                        <p>The number of "compromise" paths (labels) at each intersection could grow extremely large, consuming lots of memory and slowing things down</p>
+                    </div>
+                    
+                    <table class="performance-table" style="font-size: 0.9em;">
+                        <tr>
+                            <th>Operation</th>
+                            <th>Phase 2 (PoC)</th>
+                        </tr>
+                        <tr>
+                            <td>Edge Removal</td>
+                            <td>O(d) list-scan</td>
+                        </tr>
+                        <tr>
+                            <td>Label.dominates</td>
+                            <td>O(1) × 3 repeated</td>
+                        </tr>
+                        <tr>
+                            <td>LabelSet.add</td>
+                            <td>O(m) full-scan (where m is # of labels in frontier)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Smart Solutions -->
+        <div class="slide">
+            <h2>Smart Solutions for Speed and Memory Efficiency</h2>
+            
+            <div class="feature-box">
+                <h4>⚡ 1. Faster Road Network Updates</h4>
+                <p>Changed Graph storage from <strong>list to dictionary</strong> → Made adding/removing roads almost instant <span class="highlight-black">(O(1))</span>, crucial for dynamic maps</p>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="feature-box">
+                        <h4>🧠 2. Remembering Dominance Checks</h4>
+                        <p>Added a <strong>cache</strong> for repetitive comparisons between path costs</p>
+                        <p>If we've compared two cost vectors before, we just look up the answer instantly</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="feature-box">
+                        <h4>💾 3. Lightweight Path Objects</h4>
+                        <p>Used Python's <code>__slots__</code> to make Label objects more efficient</p>
+                        <p>Cut down memory usage significantly - <span class="highlight-black">tens of megabytes saved</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <table class="performance-table">
+                <tr>
+                    <th>Operation</th>
+                    <th>Phase 2 (PoC)</th>
+                    <th>Phase 3 (Optimized)</th>
+                    <th>Improvement</th>
+                </tr>
+                <tr>
+                    <td>Edge Removal</td>
+                    <td>O(d) list-scan</td>
+                    <td>O(1) dict deletion</td>
+                    <td>~10× faster</td>
+                </tr>
+                <tr>
+                    <td>Label.dominates</td>
+                    <td>O(1) × 3 repeated</td>
+                    <td>O(1) LRU cache</td>
+                    <td>2×–5× speedup</td>
+                </tr>
+                <tr>
+                    <td>LabelSet.add</td>
+                    <td>O(m) full-scan</td>
+                    <td>O(m) ε-pruning</td>
+                    <td>>95% frontier reduction</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 9: Massive Data Handling -->
+        <div class="slide">
+            <h2>Handling Massive Data & Future Growth</h2>
+            
+            <div class="two-column">
+                <div>
+                    <div class="feature-box">
+                        <h4>✂️ 1. Epsilon-Pruning: Taming the Frontier</h4>
+                        <p>To prevent "frontier explosion", we introduced <strong>epsilon-pruning</strong></p>
+                        <p>Merge paths that are "almost" identical in cost - trading tiny precision for <span class="highlight-black">huge gains in speed and memory</span></p>
+                        <p><strong>Result:</strong> 20-label frontier → 1 label with ε=0.1</p>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>💿 2. Streaming Graph Data</h4>
+                        <p>Instead of loading entire city road network into memory, we stream data from disk when needed</p>
+                        <p>Allows handling <span class="highlight-black">arbitrarily large maps</span>, scaling beyond available RAM</p>
+                    </div>
+                </div>
+                <div>
+                    <table class="performance-table">
+                        <tr>
+                            <th>Scenario</th>
+                            <th>Size</th>
+                            <th>Time (s)</th>
+                        </tr>
+                        <tr>
+                            <td>Graph.add_edge</td>
+                            <td>N=10,000</td>
+                            <td>0.0427</td>
+                        </tr>
+                        <tr>
+                            <td>Graph.neighbors</td>
+                            <td>N=10,000</td>
+                            <td>0.0010</td>
+                        </tr>
+                        <tr>
+                            <td>LabelSet.add</td>
+                            <td>M=10,000</td>
+                            <td>0.0018</td>
+                        </tr>
+                        <tr>
+                            <td>PriorityQueue.pop</td>
+                            <td>K=10,000</td>
+                            <td>0.0133</td>
+                        </tr>
+                    </table>
+
+                    <div class="feature-box">
+                        <h4>🚀 Future Work</h4>
+                        <ul>
+                            <li>Customizable ranking for users</li>
+                            <li>Advanced spatial indexing</li>
+                            <li>Parallel processing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Impact and Vision -->
+        <div class="slide">
+            <h2>Impact and Future Vision</h2>
+            
+            <div class="feature-box">
+                <h4>🧠 A Smarter Navigation Experience</h4>
+                <p>Our project moves navigation systems towards a more <span class="highlight-black">user-centric approach</span>, offering truly intelligent choices that reflect diverse real-world needs, not just a single "best" path.</p>
+            </div>
+
+            <h3>🌍 Beyond Roads</h3>
+            <p>The principles of multi-criteria pathfinding and our data structures can be applied to many other complex decision-making problems:</p>
+            
+            <div class="two-column">
+                <div>
+                    <ul>
+                        <li><strong>🚚 Logistics</strong> and supply chain optimization</li>
+                        <li><strong>🚇 Public transit</strong> planning</li>
+                        <li><strong>💰 Multi-objective decision systems</strong> in finance</li>
+                        <li><strong>🏥 Healthcare</strong> resource allocation</li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="feature-box">
+                        <h4>📊 Key Achievements</h4>
+                        <ul>
+                            <li>✅ Modular, extensible architecture</li>
+                            <li>✅ Scales to 10,000+ nodes efficiently</li>
+                            <li>✅ >95% memory reduction with optimizations</li>
+                            <li>✅ Comprehensive validation and testing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <h1 style="color: #3498db; font-size: 2.5em;">Thank You!</h1>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-btn" id="prev-btn" onclick="previousSlide()">← Previous</button>
+            <button class="nav-btn" id="next-btn" onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+            
+            document.getElementById('prev-btn').disabled = currentSlide === 0;
+            document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousSlide();
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>
